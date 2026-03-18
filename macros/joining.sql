@@ -7,7 +7,7 @@ adset_id_with_default_tracking AS (
   )
 ),
 default_adset_tracking_goal AS (
-  SELECT DISTINCT LOWER(JSON_VALUE(data,'$.optimization_goal')) AS conversion_tag,JSON_VALUE(data,'$.adset_id') AS adset_id FROM `amp-main.facebook_raw.ads_insights` WHERE JSON_VALUE(data,'$.adset_id') IN (SELECT adset_id FROM adset_id_with_default_tracking)
+  SELECT DISTINCT LOWER(JSON_VALUE(data,'$.optimization_goal')) AS conversion_tag,JSON_VALUE(data,'$.adset_id') AS adset_id FROM {{ source(source_name, table_name) }} WHERE JSON_VALUE(data,'$.adset_id') IN (SELECT adset_id FROM adset_id_with_default_tracking)
 ),
 ad_to_adset AS (
     SELECT JSON_VALUE(data,'$.id') AS ad_id,JSON_VALUE(data,'$.adset_id') AS adset_id ,
