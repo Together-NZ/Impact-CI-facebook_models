@@ -38,6 +38,11 @@ parsed_video_actions AS (
         FROM UNNEST(JSON_EXTRACT_ARRAY(actions)) AS entry
         WHERE JSON_VALUE(entry, '$.action_type') = 'post'
     ) AS INT64) AS post_share,
+    SAFE_CAST((
+        SELECT SUM(SAFE_CAST(JSON_EXTRACT_SCALAR(entry, '$.value') AS FLOAT64))
+        FROM UNNEST(JSON_EXTRACT_ARRAY(actions)) AS entry
+        WHERE LOWER(JSON_VALUE(entry, '$.action_type')) = 'lead'
+    ) AS INT64) AS lead,
 
     SAFE_CAST((
         SELECT SUM(SAFE_CAST(JSON_EXTRACT_SCALAR(entry, '$.value') AS FLOAT64))
@@ -112,6 +117,7 @@ summed_data AS (
         SUM(conversion) AS conversions,
         SUM(SAFE_CAST(post_share AS INT64)) AS shares,
         SUM(SAFE_CAST(likes AS INT64)) AS likes,
+        SUM(SAFE_CAST(lead AS INT64)) AS lead,
         SUM(SAFE_CAST(comments AS INT64)) AS comments,
         SUM(SAFE_CAST(clicks AS INT64)) AS clicks,
         SUM(SAFE_CAST(impressions AS INT64)) AS impressions,

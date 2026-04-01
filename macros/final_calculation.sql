@@ -11,6 +11,7 @@ SELECT
     fcd.campaign_name,
     sd.shares,
     sd.likes,
+    sd.lead,
     sd.comments,
     fcd.campaign_status,
     fcd.campaign_objective,
