@@ -13,6 +13,7 @@ SELECT
     sd.likes,
     sd.lead,
     sd.comments,
+    sd.conversion_tag,
     fcd.campaign_status,
     fcd.campaign_objective,
     fcd.start_time,
@@ -28,7 +29,7 @@ SELECT
     sd.impressions,
     sd.post AS delivery_social_post_like,
     sd.total_spend as media_cost,
-    row_number() OVER (PARTITION BY sd.date_start, sd.ad_id ,fcd.campaign_id ORDER BY sd.date_start) AS row_number
+    row_number() OVER (PARTITION BY sd.date_start, sd.ad_id ,fcd.campaign_id, sd.conversion_tag ORDER BY sd.date_start) AS row_number
 FROM summed_data sd
 LEFT JOIN filtered_campaign_data fcd
     ON fcd.campaign_id = sd.campaign_id

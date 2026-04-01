@@ -8,6 +8,7 @@ parsed_video_actions AS (
     clicks,
     campaign_id,
     impressions,
+    conversion_tag,
     CASE WHEN conversion_tag ='reach'
         THEN NULL
         WHEN conversion_tag = 'impressions'
@@ -114,6 +115,7 @@ summed_data AS (
         adset_id,
         --adset_name,
         campaign_id,
+        conversion_tag,
         SUM(conversion) AS conversions,
         SUM(SAFE_CAST(post_share AS INT64)) AS shares,
         SUM(SAFE_CAST(likes AS INT64)) AS likes,
@@ -132,6 +134,6 @@ summed_data AS (
         SUM(last_video_p75) AS total_video_p75,
         SUM(last_video_p100) AS total_video_p100
     FROM parsed_video_actions
-    GROUP BY date_start, ad_id,  campaign_id, adset_id
+    GROUP BY date_start, ad_id,  campaign_id, adset_id, conversion_tag
 )
 {% endmacro %}
