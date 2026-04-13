@@ -44,18 +44,28 @@ ORDER BY sd.date_start
 )
 SELECT * EXCEPT(ad_name), ad_name as creative_name, 
 'Meta' AS publisher,
-CASE WHEN ARRAY_LENGTH(SPLIT(media_buy_external_name, '_'))>=8 THEN
-SPLIT(media_buy_external_name, '_')[OFFSET(7)] 
-ELSE NULL
-END AS audience_name,
 CASE 
 WHEN ARRAY_LENGTH(SPLIT(campaign_name,'_'))>=4 AND SPLIT(campaign_name,'_')[OFFSET(3)] LIKE '%SOCIAL%' AND (lower(campaign_name) like '%vid%' or lower(ad_name) like '%vid%') THEN 'Social Video'
 WHEN ARRAY_LENGTH(SPLIT(campaign_name,'_'))>=4 AND SPLIT(campaign_name,'_')[OFFSET(3)] LIKE '%SOCIAL%' AND (lower(campaign_name) not like '%vid%' and lower(ad_name) not like '%vid%')THEN 'Social Display'
 else 'Other'
 END AS media_format,
-CASE WHEN ARRAY_LENGTH(SPLIT(ad_name,'_'))>=8 THEN SPLIT(ad_name, '_')[OFFSET(5)] ELSE 'Other' END AS ad_format_detail,
-CASE WHEN ARRAY_LENGTH(SPLIT(ad_name,'_'))>=8 THEN SPLIT(ad_name, '_')[OFFSET(6)] ELSE 'Other' END AS ad_format,
-SPLIT(ad_name, '_')[OFFSET(ARRAY_LENGTH(SPLIT(ad_name, '_'))-1)] AS creative_descr,
-CASE WHEN ARRAY_LENGTH(SPLIT(campaign_name,'_')) <=1 THEN 'Other' ELSE SPLIT(campaign_name,'_')[OFFSET(1)] END AS campaign_descr
+    CASE WHEN ARRAY_LENGTH(SPLIT(media_buy_external_name, '_')) < 8 AND ARRAY_LENGTH(SPLIT(media_buy_external_name, '_')) > 1  
+         THEN SPLIT(media_buy_external_name, '_')[SAFE_OFFSET(ARRAY_LENGTH(SPLIT(media_buy_external_name, '_'))-1)] 
+         WHEN ARRAY_LENGTH(SPLIT(media_buy_external_name, '_')) >= 8 THEN SPLIT(media_buy_external_name, '_')[SAFE_OFFSET(7)] 
+         ELSE 'Other' END AS audience_name,
+    CASE WHEN ARRAY_LENGTH(SPLIT(creative_name, '_')) < 8 AND ARRAY_LENGTH(SPLIT(creative_name, '_')) > 1  
+         THEN SPLIT(creative_name, '_')[SAFE_OFFSET(ARRAY_LENGTH(SPLIT(creative_name, '_'))-1)] 
+         WHEN ARRAY_LENGTH(SPLIT(creative_name, '_')) >= 8 THEN SPLIT(creative_name, '_')[SAFE_OFFSET(7)] 
+         ELSE 'Other' END AS creative_descr,
+    CASE WHEN ARRAY_LENGTH(SPLIT(creative_name, '_')) >= 8 THEN SPLIT(creative_name, '_')[SAFE_OFFSET(5)] 
+         WHEN ARRAY_LENGTH(SPLIT(creative_name, '_')) < 8 AND ARRAY_LENGTH(SPLIT(creative_name, '_')) > 1  
+         THEN SPLIT(creative_name, '_')[SAFE_OFFSET(ARRAY_LENGTH(SPLIT(creative_name, '_'))-3)] 
+         ELSE 'Other' END AS ad_format_detail,
+    CASE WHEN ARRAY_LENGTH(SPLIT(creative_name, '_')) >= 8 THEN SPLIT(creative_name, '_')[SAFE_OFFSET(6)] 
+         WHEN ARRAY_LENGTH(SPLIT(creative_name, '_')) < 8 AND ARRAY_LENGTH(SPLIT(creative_name, '_')) > 1  
+         THEN SPLIT(creative_name, '_')[SAFE_OFFSET(ARRAY_LENGTH(SPLIT(creative_name, '_'))-2)] 
+         ELSE 'Other' END AS ad_format,
+    CASE WHEN ARRAY_LENGTH(SPLIT(campaign_name,'_')) <=1 THEN 'Other'
+        ELSE SPLIT(campaign_name,'_')[SAFE_OFFSET(1)] END AS campaign_descr
 FROM deplicate_data WHERE row_number = 1
 {% endmacro %}
