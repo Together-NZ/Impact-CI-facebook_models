@@ -49,8 +49,7 @@ WHEN ARRAY_LENGTH(SPLIT(campaign_name,'_'))>=4 AND SPLIT(campaign_name,'_')[OFFS
 WHEN ARRAY_LENGTH(SPLIT(campaign_name,'_'))>=4 AND SPLIT(campaign_name,'_')[OFFSET(3)] LIKE '%SOCIAL%' AND (lower(campaign_name) not like '%vid%' and lower(ad_name) not like '%vid%')THEN 'Social Display'
 else 'Other'
 END AS media_format,
-    CASE WHEN ARRAY_LENGTH(SPLIT(media_buy_external_name, '_')) >= 8 THEN SPLIT(media_buy_external_name, '_')[SAFE_OFFSET(7)] 
-         ELSE 'Other' END AS audience_name,
+    COALESCE(REGEXP_EXTRACT(media_buy_external_name, r'(?:PLATFORM|1PD)_(.+)'), 'Other') AS audience_name,
     CASE WHEN ARRAY_LENGTH(SPLIT(ad_name, '_')) >= 8 THEN SPLIT(ad_name, '_')[SAFE_OFFSET(7)] 
          ELSE 'Other' END AS creative_descr,
     CASE WHEN ARRAY_LENGTH(SPLIT(ad_name, '_')) >= 8 THEN SPLIT(ad_name, '_')[SAFE_OFFSET(5)] 
