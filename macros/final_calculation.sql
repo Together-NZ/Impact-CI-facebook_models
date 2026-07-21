@@ -57,7 +57,6 @@ END AS media_format,
     CASE WHEN ARRAY_LENGTH(SPLIT(ad_name, '_')) >= 7 THEN SPLIT(ad_name, '_')[SAFE_OFFSET(6)] 
          ELSE 'Other' END AS ad_format,
     CASE WHEN ARRAY_LENGTH(SPLIT(campaign_name,'_')) <=1 THEN 'Other'
-        ELSE SPLIT(campaign_name,'_')[SAFE_OFFSET(1)] END AS campaign_descr,
-        'Meta' AS platform
+        ELSE SPLIT(campaign_name,'_')[SAFE_OFFSET(1)] END AS campaign_descr
 FROM deplicate_data WHERE row_number = 1
 {% endmacro %}
