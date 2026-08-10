@@ -1,39 +1,17 @@
 {% macro metric_calculation() %}
-parsed_video_actions AS (
- SELECT
-    date_start,
-    va.ad_id,
-    va.adset_id,
-    spend,
-    clicks,
-    campaign_id,
-    impressions,
-    conversion_tag,
-    CASE WHEN conversion_tag ='reach'
-        THEN NULL
-        WHEN conversion_tag = 'impressions'
-        THEN impressions
-        WHEN conversion_tag = 'thruplay'
-        THEN 
-            SAFE_CAST((
-                SELECT SUM(SAFE_CAST(JSON_EXTRACT_SCALAR(v, '$.value') AS FLOAT64))
-                FROM UNNEST(video_15_sec_watched_actions) AS v
-            ) AS INT64)
-    ELSE
-        SAFE_CAST((
-        SELECT SUM(SAFE_CAST(JSON_EXTRACT_SCALAR(entry, '$.value') AS FLOAT64))
-        FROM UNNEST(JSON_EXTRACT_ARRAY(actions)) AS entry
-        WHERE (
-            REGEXP_CONTAINS(conversion_tag, r'\d')
-            AND JSON_VALUE(entry, '$.action_type') LIKE CONCAT('%', conversion_tag, '%')
-        )
-        OR (
-            NOT REGEXP_CONTAINS(conversion_tag, r'\d')
-            AND conversion_tag LIKE CONCAT('%', JSON_VALUE(entry, '$.action_type'), '%')
-        )
-        ) AS INT64) 
-    END AS conversion,
-    -- ACTIONS (sum all matching entries)
+parsed_metrics AS (
+    SELECT    date_start,
+        ad_id,
+        --ad_name,
+        adset_id,
+        --adset_name,
+        clicks,
+        spend,
+        campaign_id,
+        reach,
+        frequency,
+        impressions,
+            -- ACTIONS (sum all matching entries)
     SAFE_CAST((
         SELECT SUM(SAFE_CAST(JSON_EXTRACT_SCALAR(entry, '$.value') AS FLOAT64))
         FROM UNNEST(JSON_EXTRACT_ARRAY(actions)) AS entry
@@ -100,24 +78,10 @@ parsed_video_actions AS (
         SELECT SUM(SAFE_CAST(JSON_EXTRACT_SCALAR(v, '$.value') AS FLOAT64))
         FROM UNNEST(video_p100_array) AS v
     ) AS INT64) AS last_video_p100
-
-FROM flattened_video_actions AS va LEFT JOIN centralized_ad_conversion_tag AS cnt ON va.ad_id = cnt.ad_id
-    
+    FROM flattened_video_actions
 ),
-
-
-
-summed_data AS (
-    SELECT
-        date_start,
-        ad_id,
-        --ad_name,
-        adset_id,
-        --adset_name,
-        campaign_id,
-        conversion_tag,
-        SUM(conversion) AS conversions,
-        SUM(SAFE_CAST(post_share AS INT64)) AS shares,
+basic_metrics AS (
+    SELECT     SUM(SAFE_CAST(post_share AS INT64)) AS shares,
         SUM(SAFE_CAST(likes AS INT64)) AS likes,
         SUM(SAFE_CAST(lead AS INT64)) AS lead,
         SUM(SAFE_CAST(comments AS INT64)) AS comments,
@@ -132,8 +96,73 @@ summed_data AS (
         SUM(last_video_p25) AS total_video_p25,
         SUM(last_video_p50) AS total_video_p50,
         SUM(last_video_p75) AS total_video_p75,
-        SUM(last_video_p100) AS total_video_p100
-    FROM parsed_video_actions
-    GROUP BY date_start, ad_id,  campaign_id, adset_id, conversion_tag
+        SUM(last_video_p100) AS total_video_p100,
+        date_start,
+        ad_id,
+        --ad_name,
+        adset_id,
+        --adset_name,
+        campaign_id
+        FROM parsed_metrics GROUP BY date_start,campaign_id,ad_id,adset_id
+),
+parsed_conversion_actions AS (
+ SELECT
+    date_start,
+    va.ad_id,
+    va.adset_id,
+    campaign_id,
+    conversion_tag,
+    CASE WHEN conversion_tag ='reach'
+        THEN NULL
+        WHEN conversion_tag = 'impressions'
+        THEN impressions
+        WHEN conversion_tag = 'thruplay'
+        THEN 
+            SAFE_CAST((
+                SELECT SUM(SAFE_CAST(JSON_EXTRACT_SCALAR(v, '$.value') AS FLOAT64))
+                FROM UNNEST(video_15_sec_watched_actions) AS v
+            ) AS INT64)
+    ELSE
+        SAFE_CAST((
+        SELECT SUM(SAFE_CAST(JSON_EXTRACT_SCALAR(entry, '$.value') AS FLOAT64))
+        FROM UNNEST(JSON_EXTRACT_ARRAY(actions)) AS entry
+        WHERE (
+            REGEXP_CONTAINS(conversion_tag, r'\d')
+            AND JSON_VALUE(entry, '$.action_type') LIKE CONCAT('%', conversion_tag, '%')
+        )
+        OR (
+            NOT REGEXP_CONTAINS(conversion_tag, r'\d')
+            AND conversion_tag LIKE CONCAT('%', JSON_VALUE(entry, '$.action_type'), '%')
+        )
+        ) AS INT64) 
+    END AS conversion
+
+FROM flattened_video_actions AS va LEFT JOIN centralized_ad_conversion_tag AS cnt ON va.ad_id = cnt.ad_id
+    
+),
+sum_conversion AS (
+    SELECT SUM(conversion) AS conversions,date_start,ad_id,adset_id,campaign_id FROM parsed_conversion_actions GROUP BY date_start,ad_id,adset_id,campaign_id
+),
+summed_data AS (
+    SELECT
+   bm.date_start,bm.ad_id,bm.campaign_id,bm,
+   bm.adset_id,bm.shares,
+        bm.likes,
+        bm.lead,
+        bm.comments,
+        bm.clicks,
+        bm.impressions,
+        bm.post,
+        bm.page_engagement,
+        bm.engagement,
+        bm.total_spend,
+ 
+        bm.total_video_played,
+        bm.total_video_p25,
+        bm.total_video_p50,
+        bm.total_video_p75,
+        bm.total_video_p100,
+        c.conversions 
+        FROM basic_metrics AS bm LEFT JOIN sum_conversion AS c on bm.ad_id=c.ad_id AND bm.date_start=c.date_start
 )
 {% endmacro %}
