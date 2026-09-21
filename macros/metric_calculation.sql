@@ -113,7 +113,7 @@ parsed_conversion_actions AS (
     campaign_id,
     conversion_tag,
     CASE WHEN conversion_tag ='reach'
-        THEN NULL
+        THEN reach
         WHEN conversion_tag = 'impressions'
         THEN impressions
         WHEN conversion_tag = 'thruplay'
@@ -141,11 +141,19 @@ FROM flattened_video_actions AS va LEFT JOIN centralized_ad_conversion_tag AS cn
     
 ),
 sum_conversion AS (
-    SELECT SUM(conversion) AS conversions,date_start,ad_id,adset_id,campaign_id FROM parsed_conversion_actions GROUP BY date_start,ad_id,adset_id,campaign_id
+    SELECT
+        SUM(conversion) AS conversions,
+        STRING_AGG(DISTINCT conversion_tag, ', ' ORDER BY conversion_tag) AS conversion_tag,
+        date_start,
+        ad_id,
+        adset_id,
+        campaign_id
+    FROM parsed_conversion_actions
+    GROUP BY date_start, ad_id, adset_id, campaign_id
 ),
 summed_data AS (
     SELECT
-   bm.date_start,bm.ad_id,bm.campaign_id,bm,
+   bm.date_start,bm.ad_id,bm.campaign_id,
    bm.adset_id,bm.shares,
         bm.likes,
         bm.lead,
@@ -162,7 +170,8 @@ summed_data AS (
         bm.total_video_p50,
         bm.total_video_p75,
         bm.total_video_p100,
-        c.conversions 
+        c.conversions,
+        c.conversion_tag
         FROM basic_metrics AS bm LEFT JOIN sum_conversion AS c on bm.ad_id=c.ad_id AND bm.date_start=c.date_start
 )
 {% endmacro %}

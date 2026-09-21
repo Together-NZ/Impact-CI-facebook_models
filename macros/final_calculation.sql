@@ -17,6 +17,7 @@ SELECT
     fcd.campaign_objective,
     fcd.start_time,
     fcd.stop_time,
+    sd.conversion_tag,
     sd.conversions as conversions,
     sd.total_video_p25 as video_25_completion,
     sd.total_video_p50 as video_50_completion,
