@@ -16,8 +16,6 @@ centralized_adset_conversion_tag AS (
   SELECT adset_id, conversion_tag FROM custom_conversion_id_joining
   UNION DISTINCT
   SELECT adset_id, conversion_tag FROM adset_id_with_other_offsite_event_type
-  UNION DISTINCT
-  SELECT adset_id, conversion_tag FROM default_adset_tracking_goal
 ),
 centralized_ad_conversion_tag AS (
   SELECT ad_id, conversion_tag

@@ -126,10 +126,6 @@ all_conversion_tags AS (
     FROM centralized_ad_conversion_tag
     WHERE conversion_tag IS NOT NULL
     UNION DISTINCT
-    SELECT ad_id, date_start, optimization_goal
-    FROM flattened_video_actions
-    WHERE optimization_goal IS NOT NULL
-    UNION DISTINCT
     SELECT ad_id, date_start, conversion_tag
     FROM reported_conversion_tags
     WHERE conversion_tag IS NOT NULL
