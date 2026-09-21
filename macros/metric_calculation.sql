@@ -105,31 +105,6 @@ basic_metrics AS (
         campaign_id
         FROM parsed_metrics GROUP BY date_start,campaign_id,ad_id,adset_id
 ),
-reported_conversion_tags AS (
-    SELECT
-        va.date_start,
-        va.ad_id,
-        CASE
-            WHEN LOWER(JSON_VALUE(entry, '$.action_type')) IN (
-                'lead', 'purchase', 'add_to_cart', 'initiate_checkout',
-                'complete_registration', 'subscribe', 'schedule', 'contact'
-            ) THEN LOWER(JSON_VALUE(entry, '$.action_type'))
-            WHEN REGEXP_CONTAINS(LOWER(IFNULL(JSON_VALUE(entry, '$.action_type'), '')), r'offsite_conversion\.custom\.\d+')
-                THEN REGEXP_EXTRACT(LOWER(JSON_VALUE(entry, '$.action_type')), r'(\d+)$')
-            ELSE NULL
-        END AS conversion_tag
-    FROM flattened_video_actions AS va,
-    UNNEST(JSON_EXTRACT_ARRAY(va.actions)) AS entry
-),
-all_conversion_tags AS (
-    SELECT ad_id, CAST(NULL AS STRING) AS date_start, conversion_tag
-    FROM centralized_ad_conversion_tag
-    WHERE conversion_tag IS NOT NULL
-    UNION DISTINCT
-    SELECT ad_id, date_start, conversion_tag
-    FROM reported_conversion_tags
-    WHERE conversion_tag IS NOT NULL
-),
 parsed_conversion_actions AS (
  SELECT
     va.date_start,
@@ -202,9 +177,8 @@ parsed_conversion_actions AS (
         ) AS INT64)
     END AS conversion
 FROM flattened_video_actions AS va
-INNER JOIN all_conversion_tags AS t
+LEFT JOIN centralized_ad_conversion_tag AS t
     ON va.ad_id = t.ad_id
-    AND (t.date_start IS NULL OR t.date_start = va.date_start)
 ),
 conversion_by_key AS (
     SELECT
