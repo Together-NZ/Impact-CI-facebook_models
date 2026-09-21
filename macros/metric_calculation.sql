@@ -113,7 +113,7 @@ parsed_conversion_actions AS (
     campaign_id,
     conversion_tag,
     CASE WHEN conversion_tag ='reach'
-        THEN reach
+        THEN NULL
         WHEN conversion_tag = 'impressions'
         THEN impressions
         WHEN conversion_tag = 'thruplay'
