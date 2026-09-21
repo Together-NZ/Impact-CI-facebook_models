@@ -140,7 +140,7 @@ parsed_conversion_actions AS (
             SAFE_CAST((
                 SELECT SUM(SAFE_CAST(JSON_EXTRACT_SCALAR(entry, '$.value') AS FLOAT64))
                 FROM UNNEST(JSON_EXTRACT_ARRAY(actions)) AS entry
-                WHERE LOWER(JSON_VALUE(entry, '$.action_type')) IN ('landing_page_view', 'omni_landing_page_view')
+                WHERE LOWER(JSON_VALUE(entry, '$.action_type')) = 'landing_page_view'
             ) AS INT64)
         WHEN t.conversion_tag IN ('link_clicks', 'link_click')
         THEN
