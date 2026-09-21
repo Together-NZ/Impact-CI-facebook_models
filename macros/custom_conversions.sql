@@ -20,6 +20,5 @@ adset_id_with_other_offsite_event_type AS (
   FROM latest_ad_sets_goal
   WHERE JSON_VALUE(adset_tracking_goal, '$.custom_event_type') IS NOT NULL
     AND JSON_VALUE(adset_tracking_goal, '$.custom_event_type') != 'OTHER'
-    AND adset_id NOT IN (SELECT adset_id FROM custom_conversion_id_joining)
 )
 {% endmacro %}

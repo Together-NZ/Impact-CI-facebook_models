@@ -26,6 +26,7 @@ ranked_data AS (
         JSON_EXTRACT(data, '$.video_play_actions') AS video_play_actions_array,
         JSON_EXTRACT(data, '$.actions') AS video_view_actions_array,
         JSON_EXTRACT(data, '$.actions') AS actions,
+        LOWER(JSON_VALUE(data, '$.optimization_goal')) AS optimization_goal,
         ROW_NUMBER() OVER (
             PARTITION BY 
                 JSON_VALUE(data, '$.account_id'),
@@ -58,6 +59,8 @@ flattened_video_actions AS (
         frequency,
         impressions,
         actions,
+        deduplicated_data.conversion_array,
+        deduplicated_data.optimization_goal,
         JSON_EXTRACT_ARRAY(video_play_actions_array) AS video_play_array,
         JSON_EXTRACT_ARRAY(video_p25_actions) AS video_p25_array,
         JSON_EXTRACT_ARRAY(video_p50_actions) AS video_p50_array,
